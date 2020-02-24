@@ -1,4 +1,5 @@
 require('dotenv').config()
+const notes = require('./notes.js')
 
 const Telegraf = require('telegraf')
 
@@ -9,29 +10,45 @@ bot.on('sticker', (ctx) => ctx.reply('👍'))
 bot.hears('hi', (ctx) => ctx.reply('Hey there'))
 bot.command('modern', ({ reply }) => reply('Yo'))
 
-
-bot.hears('add2', (ctx) => {
-    console.log('Message from user', ctx.chat.username, 'recieved:', ctx.message.text)
-    //var parts = ctx.message.text.split(" ")
-    //console.log(parts)
-    ctx.reply('asdas')
+bot.hears('add', (ctx) => {
+    
 })
 
-
-bot.use((ctx, next) => {    
-    console.log('Message from user', ctx.chat.username, 'recieved:', ctx.message.text)
+bot.use((ctx, next) => {
+    if (!ctx.message) return next(ctx);
     if (ctx.message.text == '/wipe') {
         ctx.session = {}
         return ctx.reply('session wiped').then(() => next(ctx))
     }
-    if (ctx.message.text.includes("add")) {
+
+    if (ctx.message.text && ctx.message.text.includes("add")) {
         console.log('Message from user', ctx.chat.username, 'recieved:', ctx.message.text)
         var parts = ctx.message.text.split(" ")
         console.log(parts)
-        return ctx.reply('asdas')
+        if (parts.length > 1) {
+            var distance = 0
+            var duration = 0
+            parts.forEach(element => {
+                if (element.includes("km")) {
+                    if (distance == 0) distance = parseFloat(element)
+                }
+                if (element.includes("m")) {
+                    if (distance == 0) distance = parseFloat(element) / 1000
+                }
+                if (element.includes("h")) {
+                    if (duration == 0) duration = parseFloat(element) * 60
+                }
+                if (element.includes("min")) {
+                    if (duration == 0) duration = parseFloat(element)
+                }
+            });
+            notes.add(ctx.chat.username, distance, duration)
+        }
+        const notesList = notes.loadNotes()
+        return ctx.reply(notesList)
     }
 
-    return next(ctx)
+//    return next(ctx)
 })
 
 
