@@ -1,7 +1,9 @@
 require('dotenv').config()
 const notes = require('./notes.js')
-
 const Telegraf = require('telegraf')
+
+//
+const port = process.env.PORT
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
 bot.start((ctx) => ctx.reply('Welcome'))
