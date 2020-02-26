@@ -3,6 +3,7 @@ const notes = require('./notes.js')
 const Telegraf = require('telegraf')
 
 //
+const API_TOKEN = process.env.API_TOKEN || '';
 const URL = process.env.URL || 'https://telegram-bot-run.herokuapp.com/';
 const PORT = process.env.PORT || 3000;
 const bot = new Telegraf(process.env.BOT_TOKEN)
