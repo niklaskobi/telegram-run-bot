@@ -3,9 +3,13 @@ const notes = require('./notes.js')
 const Telegraf = require('telegraf')
 
 //
-const port = process.env.PORT
-
+const URL = process.env.URL || 'https://telegram-bot-run.herokuapp.com/';
+const PORT = process.env.PORT || 3000;
 const bot = new Telegraf(process.env.BOT_TOKEN)
+
+bot.telegram.setWebhook(`${URL}/bot${API_TOKEN}`);
+bot.startWebhook(`/bot${API_TOKEN}`, null, PORT)
+
 bot.start((ctx) => ctx.reply('Welcome'))
 bot.help((ctx) => ctx.reply('Send me a sticker'))
 bot.on('sticker', (ctx) => ctx.reply('👍'))
