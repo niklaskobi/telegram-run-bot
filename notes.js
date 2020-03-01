@@ -28,6 +28,38 @@ const createNewNote = (nickName, distance, duration) => {
     console.log(chalk.green.inverse('New note added!'))
 }
 
+const getJson1User = (userName) => {
+    const notes = loadNotes()
+    for (let i=0; i<notes.length; i++) {
+        if (notes[i].nickName == userName) {
+            return notes[i];
+        }
+    }
+}
+
+const getLastXStats = (runsCnt, userName) => {
+    const lastNRuns = getLastNRuns(runsCnt, userName)
+    let sumDist = 0;
+    let sumDur = 0;
+    for (let i=0; i<lastNRuns.length; i++) {
+        console.log(lastNRuns[i])
+        sumDist += lastNRuns[i].distance
+        sumDur += lastNRuns[i].duration
+    }
+    return {distance:sumDist, duration:sumDur, pace:getPace(sumDist, sumDur)}
+}
+
+const getLastNRuns = (runsCnt, userName) => {
+    let lastXStats
+    const stats = getJson1User(userName).runs
+    const statsSorted = stats.sort((a, b) => a.date < b.date);
+    if (runsCnt == 0) {
+        return statsSorted
+    } else {
+        return statsSorted.slice(Math.max(statsSorted.length - runsCnt, 0))
+    }
+}
+
 const getPace = (distance, duration) => duration / distance
 
 const createRun = (distance, duration) => {
@@ -112,5 +144,6 @@ module.exports = {
     removeNote: removeNote,
     listNotes: listNotes,
     readNote: readNote,
-    loadNotes: loadNotes
+    loadNotes: loadNotes,
+    getLastXStats: getLastXStats
 }

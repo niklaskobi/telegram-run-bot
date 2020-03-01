@@ -1,4 +1,5 @@
 require('dotenv').config()
+const chalk = require('chalk')
 const notes = require('./notes.js')
 const Telegraf = require('telegraf')
 
@@ -16,9 +17,10 @@ bot.help((ctx) => ctx.reply('Send me a sticker'))
 bot.on('sticker', (ctx) => ctx.reply('👍'))
 bot.hears('hi', (ctx) => ctx.reply('Hey there'))
 bot.command('modern', ({ reply }) => reply('Yo'))
-
-bot.hears('add', (ctx) => {
-    
+bot.hears('stats', (ctx) => {
+    const stats = notes.getLastXStats(10,ctx.chat.username)
+    console.log(chalk.blue(JSON.stringify(stats)))
+    ctx.reply(stats)
 })
 
 bot.use((ctx, next) => {
@@ -28,6 +30,7 @@ bot.use((ctx, next) => {
         return ctx.reply('session wiped').then(() => next(ctx))
     }
 
+    //ADD
     if (ctx.message.text && ctx.message.text.includes("add")) {
         console.log('Message from user', ctx.chat.username, 'recieved:', ctx.message.text)
         var parts = ctx.message.text.split(" ")
