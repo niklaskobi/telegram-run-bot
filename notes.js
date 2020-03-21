@@ -80,7 +80,6 @@ const getLastXStats = (runsCnt, userName) => {
   let sumDist = 0;
   let sumDur = 0;
   for (let i = 0; i < lastNRuns.length; i++) {
-    console.log(lastNRuns[i]);
     sumDist += lastNRuns[i].distance;
     sumDur += lastNRuns[i].duration;
   }
@@ -95,11 +94,21 @@ const getLastNRuns = (runsCnt, userName) => {
   let lastXStats;
   const stats = getJson1User(userName);
   if (!stats) return;
-  const statsSorted = stats.runs.sort((a, b) => a.date < b.date);
+
+  // sort
+  const statsSorted = stats.runs.sort((in1, in2) => {
+    let a = new Date(in1.date);
+    let b = new Date(in2.date);
+    if (a > b) return -1;
+    else if (a < b) return 1;
+    else 0;
+  });
+
   if (runsCnt == 0) {
     return statsSorted;
   } else {
-    return statsSorted.slice(Math.max(statsSorted.length - runsCnt, 0));
+    //return statsSorted.slice(Math.max(statsSorted.length - runsCnt, 0));
+    return statsSorted.slice(0, runsCnt);
   }
 };
 
@@ -160,28 +169,6 @@ const removeNote = nickName => {
   }
 };
 
-const listNotes = () => {
-  const notes = loadNotes();
-
-  console.log(chalk.inverse("Your notes"));
-
-  notes.forEach(note => {
-    console.log(note.nickName);
-  });
-};
-
-const readNote = nickName => {
-  const notes = loadNotes();
-  const note = notes.find(note => note.nickName === nickName);
-
-  if (note) {
-    console.log(chalk.inverse(note.nickName));
-    console.log(note.distance);
-  } else {
-    console.log(chalk.red.inverse("Note not found!"));
-  }
-};
-
 const saveNotes = notes => {
   const dataJSON = JSON.stringify(notes);
   fs.writeFileSync("notes.json", dataJSON);
@@ -198,15 +185,14 @@ const loadNotes = () => {
 };
 
 module.exports = {
-  add: add,
-  removeNote: removeNote,
-  listNotes: listNotes,
-  readNote: readNote,
-  loadNotes: loadNotes,
-  getLastXStats: getLastXStats,
-  getPace: getPace,
-  deleteAllStats: deleteAllStats,
+  add,
+  removeNote,
+  loadNotes,
+  getLastXStats,
+  getPace,
+  deleteAllStats,
   getNrOfRuns,
   getAllUsers,
-  getAllStats
+  getAllStats,
+  getLastNRuns
 };
