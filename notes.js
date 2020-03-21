@@ -59,12 +59,10 @@ const getJson1User = userName => {
 
 const getAllStats = userName => {
   const stats = getJson1User(userName);
-  console.log(JSON.stringify(stats));
   if (!stats) return { err: `no stats for user ${userName}` };
   let sumDist = 0;
   let sumDur = 0;
   for (let i = 0; i < stats.runs.length; i++) {
-    console.log(stats.runs[i]);
     sumDist += stats.runs[i].distance;
     sumDur += stats.runs[i].duration;
   }

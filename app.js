@@ -2,6 +2,10 @@ require("dotenv").config();
 const chalk = require("chalk");
 const notes = require("./notes.js");
 const Telegraf = require("telegraf");
+const extra = require("telegraf/extra");
+const markup = extra.markdown();
+var table = require("markdown-table");
+var width = require("string-width");
 
 // server variables
 const API_TOKEN = process.env.API_TOKEN || "";
@@ -16,6 +20,7 @@ bot.startWebhook(`/bot${API_TOKEN}`, null, PORT);
 // app variables
 const STATSDAYS = 10;
 const DECIMALSAFTERDOT = 1;
+const MAX_CHARS_NAME = 5;
 
 // bot commands
 bot.start(ctx => ctx.reply("Welcome"));
@@ -24,15 +29,62 @@ bot.on("sticker", ctx => ctx.reply("👍"));
 bot.hears("hi", ctx => ctx.reply("Hey there"));
 bot.command("modern", ({ reply }) => reply("Yo"));
 
+// send markdown text
+bot.hears("test", ctx =>
+  bot.telegram.sendMessage((chatid = ctx.from.id), "*me work!work!*", markup)
+);
+
 // stats
-bot.command("stats", ctx => {
+bot.command("me", ctx => {
   ctx.reply(statsToStr(ctx.chat.username));
 });
 
+const prepairStrForMarkdown = input => {
+  let result = input;
+  result = result.replace("*", "*");
+  result = result.replace("_", "_");
+  result = result.replace("`", "`");
+  return result;
+};
+
+const addMarkdownEvenWidth = input => "```\n".concat(input).concat("\n```");
+
 // stats all
-bot.command("statsall", ctx => {
-  ctx.reply(statsAll());
+bot.command("all", ctx => {
+  let stats = statsAll();
+  console.log(stats);
+
+  let tableData = statsAllToRows();
+  let tableOptions = { delimiterStart: false, delimiterEnd: false };
+  let tableStr = table(tableData, {
+    delimiterStart: false,
+    delimiterEnd: false
+  });
+  bot.telegram.sendMessage(
+    (chatid = ctx.from.id),
+    addMarkdownEvenWidth(tableStr),
+    markup
+  );
 });
+
+const statsAllToRows = () => {
+  let rowHeader = ["name", "km", "h", "m/km"];
+  let rows = [rowHeader];
+  let users = notes.getAllUsers();
+  let outputStr = "";
+  users.forEach(username => {
+    let stats = notes.getAllStats(username);
+    if (!stats.err) {
+      let row = [prepairStrForMarkdown(username.substring(0, MAX_CHARS_NAME))];
+      row.push(roundFloat(stats.distance));
+      row.push(roundFloat(stats.duration / 60));
+      row.push(roundFloat(stats.pace));
+      rows.push(row);
+    }
+  });
+  if (users.length > 0) return rows;
+  else return "no data";
+};
 
 const statsAll = () => {
   let users = notes.getAllUsers();
