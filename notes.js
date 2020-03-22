@@ -4,7 +4,6 @@ const fs = require("fs");
 const add = (nickName, distance, duration) => {
   const notes = loadNotes();
   const duplicateNote = notes.find(note => note.nickName === nickName);
-
   if (!duplicateNote) {
     createNewNote(nickName, distance, duration);
   } else {
@@ -35,13 +34,11 @@ const createNewNote = (nickName, distance, duration) => {
   const runJson = createRun(distance, duration);
   notes.push({
     nickName: nickName,
-    /*
     stats: {
       allDistance: distance,
       allDuration: duration,
       allPace: getPace(distance, duration)
     },
-    */
     runs: [runJson]
   });
   saveNotes(notes);
@@ -76,7 +73,7 @@ const getAllStats = userName => {
 
 const getLastXStats = (runsCnt, userName) => {
   const lastNRuns = getLastNRuns(runsCnt, userName);
-  if (!lastNRuns) return;
+  if (!lastNRuns) return { error: "no data" };
   let sumDist = 0;
   let sumDur = 0;
   for (let i = 0; i < lastNRuns.length; i++) {
@@ -90,20 +87,22 @@ const getLastXStats = (runsCnt, userName) => {
   };
 };
 
-const getLastNRuns = (runsCnt, userName) => {
-  let lastXStats;
-  const stats = getJson1User(userName);
-  if (!stats) return;
-
-  // sort
-  const statsSorted = stats.runs.sort((in1, in2) => {
+const sortArrayByDate = array => {
+  let sortedArray = array.sort((in1, in2) => {
     let a = new Date(in1.date);
     let b = new Date(in2.date);
     if (a > b) return -1;
     else if (a < b) return 1;
     else 0;
   });
+  return sortedArray;
+};
 
+const getLastNRuns = (runsCnt, userName) => {
+  let lastXStats;
+  const stats = getJson1User(userName);
+  if (!stats) return;
+  const statsSorted = sortArrayByDate(stats.runs);
   if (runsCnt == 0) {
     return statsSorted;
   } else {
@@ -118,8 +117,7 @@ const deleteAllStats = userName => {
   else {
     for (let i = 0; i < notes.length; i++) {
       if (notes[i].nickName == userName) {
-        notes[i].stats = [];
-        notes[i].runs = [];
+        notes.splice(i, 1);
         saveNotes(notes);
         return true;
       }
@@ -127,6 +125,32 @@ const deleteAllStats = userName => {
   }
   console.log("not deleted");
   return false;
+};
+
+const deleteNthRun = (username, index) => {
+  const notes = loadNotes();
+  if (!notes) return { error: "no data" };
+  else {
+    for (let i = 0; i < notes.length; i++) {
+      if (notes[i].nickName == username) {
+        let date = notes[i].runs[index - 1].date;
+        // last run?
+        if (notes[i].runs.length == 1) {
+          notes.splice(i, 1);
+        } else {
+          const runsSorted = sortArrayByDate(notes[i].runs);
+          //update stats:
+          notes[i].stats.allDistance -= runsSorted[index - 1].distance;
+          notes[i].stats.allDuration -= runsSorted[index - 1].duration;
+          // remove run
+          runsSorted.splice(index - 1, 1);
+          notes[i].runs = runsSorted;
+        }
+        saveNotes(notes);
+        return { success: `run ${date} deleted` };
+      }
+    }
+  }
 };
 
 const getPace = (distance, duration) => duration / distance;
@@ -194,5 +218,6 @@ module.exports = {
   getNrOfRuns,
   getAllUsers,
   getAllStats,
-  getLastNRuns
+  getLastNRuns,
+  deleteNthRun
 };
