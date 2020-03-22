@@ -30,17 +30,17 @@ let tableOptions = {
 bot.start(ctx => ctx.reply("Welcome"));
 bot.help(ctx => ctx.reply("Send me a sticker"));
 bot.on("sticker", ctx => ctx.reply("👍"));
-bot.hears("hi", ctx => ctx.reply("Hey there"));
+bot.hears("Hi", ctx => ctx.reply("Hey there"));
 bot.command("modern", ({ reply }) => reply("Yo"));
 
 // test ===============================================================================
-bot.hears("test", ctx =>
-  bot.telegram.sendMessage((chatid = ctx.from.id), "*me work!work!*", markup)
-);
+bot.hears("test", ctx => {
+  bot.telegram.sendMessage(ctx.chat.id, "*work! work!*", markup);
+});
 
 // stats: me =========================================================================
 bot.command("me", ctx => {
-  let username = ctx.chat.username;
+  let username = getUserName(ctx);
 
   // build table
   let tableData = stats1UserRows(username);
@@ -62,7 +62,7 @@ bot.command("me", ctx => {
 
 // history =========================================================================
 bot.command("history", ctx => {
-  let username = ctx.chat.username;
+  let username = getUserName(ctx);
 
   // get amount of runs
   let runsAmount = 0;
@@ -72,7 +72,7 @@ bot.command("history", ctx => {
   }
 
   // build table
-  let historyData = history1UserRow(ctx.chat.username, runsAmount);
+  let historyData = history1UserRow(username, runsAmount);
   let tableAsStr = table(historyData, tableOptions);
 
   // title
@@ -86,9 +86,6 @@ bot.command("history", ctx => {
 
 // stats: all =========================================================================
 bot.command("all", ctx => {
-  let stats = statsAll();
-  console.log(stats);
-
   let tableData = statsAllToRows();
   let tableAsStr = table(tableData, tableOptions);
 
@@ -98,7 +95,7 @@ bot.command("all", ctx => {
 
 // delete index =======================================================================
 bot.command("delete", ctx => {
-  let username = ctx.chat.username;
+  let username = getUserName(ctx);
 
   // get amount of runs
   let index = 0;
@@ -110,7 +107,6 @@ bot.command("delete", ctx => {
   if (index == 0) sendSpecMsg(ctx, "Usage: /delete <index>");
   else {
     let result = notes.deleteNthRun(username, index);
-    console.log(JSON.stringify(result));
     if (result.error) sendSpecMsg(ctx, result.error);
     else sendSpecMsg(ctx, result.success);
   }
@@ -127,14 +123,14 @@ bot.command("deleteall", ctx => {
 // functions =========================================================================
 const sendSpecMsg = (ctx, msg) =>
   bot.telegram.sendMessage(
-    (chatid = ctx.from.id),
+    (chatid = ctx.chat.id),
     (text = "`" + msg + "`"),
     markup
   );
 
 const sendEvenWidthMsg = (ctx, title, msg) =>
   bot.telegram.sendMessage(
-    (chatid = ctx.from.id),
+    (chatid = ctx.chat.id),
     (text = title + addMarkdownEvenWidth(msg)),
     markup
   );
@@ -143,7 +139,6 @@ const history1UserRow = (username, runsAmount) => {
   let runs = notes.getLastNRuns(runsAmount, username);
   let rowHeader = ["date", "km", "min", "m/km"];
   let rows = [rowHeader];
-  console.log(JSON.stringify(runs));
 
   if (!runs) return { error: "no data" };
 
@@ -186,7 +181,6 @@ const statsAllToRows = () => {
 
 const stats1UserRows = username => {
   const stats = notes.getLastXStats(STATSDAYS, username);
-  console.log(JSON.stringify(stats));
   if (stats.error) return { error: stats.error };
   else {
     let rows = [["stat", "value"]];
@@ -203,7 +197,6 @@ const statsAll = () => {
   let outputStr = "";
   users.forEach(username => {
     let stats = notes.getAllStats(username);
-    console.log(chalk.yellow(JSON.stringify(stats)));
     if (!stats.err) {
       outputStr += username + ": ";
       outputStr += stats.distance + "km, ";
@@ -234,6 +227,13 @@ const statsToStr = username => {
   }
 };
 
+const getUserName = ctx => {
+  if (ctx.from.username) return ctx.from.username;
+  else if (ctx.from.first_name) return ctx.from.first_name;
+  else if (ctx.from.last_name) return ctx.from.last_name;
+  else return { error: "no name found" };
+};
+
 // add run ==================================================================
 bot.command("add", ctx => {
   let pace;
@@ -241,10 +241,8 @@ bot.command("add", ctx => {
   let statsNew;
   let statsOld;
   let added = false;
-  let user = ctx.chat.username;
-  console.log(ctx.message.text);
+  let username = getUserName(ctx);
   var parts = ctx.message.text.split(" ");
-
   if (parts.length > 1) {
     var distance = 0;
     var duration = 0;
@@ -261,12 +259,13 @@ bot.command("add", ctx => {
     });
 
     if (distance != 0 && duration != 0) {
-      notes.add(ctx.chat.username, distance, duration);
-      statsNew = notes.getLastXStats(STATSDAYS, ctx.chat.username);
+      notes.add(username, distance, duration);
+      statsNew = notes.getLastXStats(STATSDAYS, username);
       pace = notes.getPace(distance, duration);
-      added = true;
-    }
+      sendSpecMsg(ctx, "run added");
+    } else sendSpecMsg(ctx, "Usage: /add <a>km <b>min");
   }
+  /*
   if (added) {
     if (statsOld) {
       console.log("compare");
@@ -286,6 +285,7 @@ bot.command("add", ctx => {
   } else {
     return ctx.reply(`Invalid input format`);
   }
+  */
 });
 
 bot.use((ctx, next) => {
@@ -297,6 +297,7 @@ bot.use((ctx, next) => {
 });
 
 const prepairStrForMarkdown = input => {
+  if (!input) return { error: "no input" };
   let result = input;
   result = result.replace("*", "*");
   result = result.replace("_", "_");

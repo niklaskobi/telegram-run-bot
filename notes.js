@@ -2,6 +2,7 @@ const chalk = require("chalk");
 const fs = require("fs");
 
 const add = (nickName, distance, duration) => {
+  if (!nickName) return { error: "no nickname!" };
   const notes = loadNotes();
   const duplicateNote = notes.find(note => note.nickName === nickName);
   if (!duplicateNote) {
