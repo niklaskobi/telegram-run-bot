@@ -93,18 +93,30 @@ bot.command("all", ctx => {
   else sendEvenWidthMsg(ctx, "", tableAsStr);
 });
 
-// delete index =======================================================================
+// delete index or user =======================================================================
 bot.command("delete", ctx => {
   let username = getUserName(ctx);
 
   // get amount of runs
   let index = 0;
+  let usernameToDelete = "";
+  let password = "";
   if (ctx.message.text.split(" ").length == 2) {
     let tmp = ctx.message.text.split(" ")[1];
     if (!isNaN(tmp)) index = parseInt(tmp);
   }
 
-  if (index == 0) sendSpecMsg(ctx, "Usage: /delete <index>");
+  if (ctx.message.text.split(" ").length == 3) {
+    usernameToDelete = ctx.message.text.split(" ")[1];
+    password = ctx.message.text.split(" ")[2];
+  }
+
+  if (password == "123") {
+    const deleted = notes.deleteAllStats(usernameToDelete);
+    if (deleted)
+      sendSpecMsg(ctx, `Removed all stats for user ${usernameToDelete}`);
+    else sendSpecMsg(ctx, `No stats for user ${usernameToDelete} found!`);
+  } else if (index == 0) sendSpecMsg(ctx, "Usage: /delete <index>");
   else {
     let result = notes.deleteNthRun(username, index);
     if (result.error) sendSpecMsg(ctx, result.error);
@@ -114,10 +126,10 @@ bot.command("delete", ctx => {
 
 // delete all runs ====================================================================
 bot.command("deleteall", ctx => {
-  const deleted = notes.deleteAllStats(ctx.chat.username);
-  if (deleted)
-    sendSpecMsg(ctx, `Removed all stats for user ${ctx.chat.username}`);
-  else sendSpecMsg(ctx, `No stats for user ${ctx.chat.username} found!`);
+  let username = getUserName(ctx);
+  const deleted = notes.deleteAllStats(username);
+  if (deleted) sendSpecMsg(ctx, `Removed all stats for user ${username}`);
+  else sendSpecMsg(ctx, `No stats for user ${username} found!`);
 });
 
 // functions =========================================================================
@@ -257,35 +269,15 @@ bot.command("add", ctx => {
         if (duration == 0) duration = parseFloat(element);
       }
     });
-
-    if (distance != 0 && duration != 0) {
+    if (distance > 50) {
+      sendSpecMsg(ctx, "aga");
+    } else if (distance != 0 && duration != 0) {
       notes.add(username, distance, duration);
       statsNew = notes.getLastXStats(STATSDAYS, username);
       pace = notes.getPace(distance, duration);
       sendSpecMsg(ctx, "run added");
     } else sendSpecMsg(ctx, "Usage: /add <a>km <b>min");
   }
-  /*
-  if (added) {
-    if (statsOld) {
-      console.log("compare");
-      paceCompare = (1 - statsOld.pace / pace) * 100;
-    }
-    let replyStr = `run added.\n`;
-    replyStr += `Distance: ${statsNew.distance}km\n`;
-    replyStr += `Duration: ${statsNew.duration}min\n`;
-    replyStr += `Pace(last run):\n${Number(pace.toFixed(1))}km/min`;
-    if (statsOld) {
-      if (paceCompare > 0)
-        replyStr += ` (+${Number(paceCompare.toFixed(DECIMALSAFTERDOT))}%)`;
-      else replyStr += ` (${Number(paceCompare.toFixed(DECIMALSAFTERDOT))}%)`;
-    }
-
-    return ctx.reply(replyStr);
-  } else {
-    return ctx.reply(`Invalid input format`);
-  }
-  */
 });
 
 bot.use((ctx, next) => {
