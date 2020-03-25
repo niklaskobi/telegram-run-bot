@@ -41,10 +41,10 @@ bot.hears("test", ctx => {
 });
 
 // test ===============================================================================
-bot.hears("log", ctx => {
-  let logs = notes.loadNotes();
+bot.command("log", ctx => {
+  let logs = JSON.stringify(notes.loadNotes());
   console.log(logs);
-  bot.telegram.sendMessage(ctx.chat.id, logs, markup);
+  bot.telegram.sendMessage(ctx.chat.id, JSON.stringify(logs), markup);
 });
 
 // stats: me =========================================================================
