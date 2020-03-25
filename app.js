@@ -43,7 +43,7 @@ bot.hears("test", ctx => {
 // test ===============================================================================
 bot.command("json", ctx => {
   let logs = notes.loadNotes();
-  if (logs) {
+  if (logs.length > 0) {
     console.log(JSON.stringify(logs));
     bot.telegram.sendMessage(
       ctx.chat.id,
