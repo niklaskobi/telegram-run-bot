@@ -41,10 +41,10 @@ bot.hears("test", ctx => {
 });
 
 // test ===============================================================================
-bot.command("log", ctx => {
-  let logs = JSON.stringify(notes.loadNotes());
-  console.log(logs);
-  bot.telegram.sendMessage(ctx.chat.id, JSON.stringify(logs), markup);
+bot.command("json", ctx => {
+  let logs = notes.loadNotes();
+  console.log(JSON.stringify(logs));
+  bot.telegram.sendMessage(ctx.chat.id, JSON.stringify(logs, null, 2), markup);
 });
 
 // stats: me =========================================================================
@@ -112,6 +112,8 @@ bot.command("all", ctx => {
 // delete index or user =======================================================================
 bot.command("delete", ctx => {
   let username = getUserName(ctx);
+  let username = getUserName(ctx);
+  console.log(`msg from user: ${username}: ${ctx.message.text}`);
 
   // get amount of runs
   let index = 0;
@@ -143,6 +145,7 @@ bot.command("delete", ctx => {
 // delete all runs ====================================================================
 bot.command("deleteall", ctx => {
   let username = getUserName(ctx);
+  console.log(`msg from user: ${username}: ${ctx.message.text}`);
   const deleted = notes.deleteAllStats(username);
   if (deleted) sendSpecMsg(ctx, `Removed all stats for user ${username}`);
   else sendSpecMsg(ctx, `No stats for user ${username} found!`);
@@ -265,11 +268,9 @@ const getUserName = ctx => {
 // add run ==================================================================
 bot.command("add", ctx => {
   let pace;
-  let paceCompare;
   let statsNew;
-  let statsOld;
-  let added = false;
   let username = getUserName(ctx);
+  console.log(`msg from user: ${username}: ${ctx.message.text}`);
   var parts = ctx.message.text.split(" ");
   if (parts.length > 1) {
     var distance = 0;
