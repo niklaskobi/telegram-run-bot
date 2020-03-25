@@ -112,7 +112,6 @@ bot.command("all", ctx => {
 // delete index or user =======================================================================
 bot.command("delete", ctx => {
   let username = getUserName(ctx);
-  let username = getUserName(ctx);
   console.log(`msg from user: ${username}: ${ctx.message.text}`);
 
   // get amount of runs
