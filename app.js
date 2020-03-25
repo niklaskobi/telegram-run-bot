@@ -19,7 +19,7 @@ bot.telegram.setWebhook(`${URL}/bot${API_TOKEN}`);
 bot.startWebhook(`/bot${API_TOKEN}`, null, PORT);
 
 // app variables
-const STATSDAYS = 3;
+const STATSDAYS = 10;
 const DECIMALSAFTERDOT = 1;
 const MAX_CHARS_NAME = 5;
 let tableOptions = {
@@ -43,20 +43,38 @@ bot.hears("test", ctx => {
 // test ===============================================================================
 bot.command("json", ctx => {
   let logs = notes.loadNotes();
-  console.log(JSON.stringify(logs));
-  bot.telegram.sendMessage(ctx.chat.id, JSON.stringify(logs, null, 2), markup);
+  if (logs) {
+    console.log(JSON.stringify(logs));
+    bot.telegram.sendMessage(
+      ctx.chat.id,
+      JSON.stringify(logs, null, 2),
+      markup
+    );
+  } else {
+    console.log("no file");
+    bot.telegram.sendMessage(ctx.chat.id, "no file", markup);
+  }
 });
 
 // stats: me =========================================================================
 bot.command("me", ctx => {
   let username = getUserName(ctx);
 
+  // get amount of runs
+  let runsAmount = 0;
+  if (ctx.message.text.split(" ").length == 2) {
+    let tmp = ctx.message.text.split(" ")[1];
+    if (!isNaN(tmp)) runsAmount = parseInt(tmp);
+  }
+
   // build table
-  let tableData = stats1UserRows(username);
+  let tableData = stats1UserRows(username, runsAmount);
   let tableAsStr = table(tableData, tableOptions);
 
   // build title and header
-  let titleText = `stats *${prepairStrForMarkdown(username)}*:\n`;
+  let titleText = `stats *${prepairStrForMarkdown(username)}*`;
+  if (runsAmount == 0) titleText += `, all runs:\n`;
+  else titleText += `, last ${runsAmount} runs:\n`;
   //remove everthing from the table until the first row
   let tableNoHeader = tableAsStr.substring(
     tableAsStr.indexOf("km"),
@@ -167,7 +185,7 @@ const sendEvenWidthMsg = (ctx, title, msg) =>
 
 const history1UserRow = (username, runsAmount) => {
   let runs = notes.getLastNRuns(runsAmount, username);
-  let rowHeader = ["date", "km", "min", "min/km"];
+  let rowHeader = ["date", "km", "min", "⌀"];
   let rows = [rowHeader];
 
   if (!runs) return { error: "no data" };
@@ -177,7 +195,7 @@ const history1UserRow = (username, runsAmount) => {
       dateToStr(new Date(runStats.date)),
       runStats.distance,
       runStats.duration,
-      roundFloat(runStats.pace)
+      roundFloat(runStats.pace, 2)
     ];
     rows.push(row);
   });
@@ -185,10 +203,10 @@ const history1UserRow = (username, runsAmount) => {
 };
 
 const dateToStr = date => date.getDate() + "." + (date.getMonth() + 1);
-const minToHours = min => Number((min / 60).toFixed(1));
+const minToHours = (min, ad) => Number((min / 60).toFixed(ad));
 
 const statsAllToRows = () => {
-  let rowHeader = ["name", "km", "h", "min/km"];
+  let rowHeader = ["name", "km", "h", "⌀"];
   let rows = [rowHeader];
   let users = notes.getAllUsers();
   let outputStr = "";
@@ -199,9 +217,9 @@ const statsAllToRows = () => {
     let stats = notes.getAllStats(username);
     if (!stats.err) {
       let row = [prepairStrForMarkdown(username.substring(0, MAX_CHARS_NAME))];
-      row.push(roundFloat(stats.distance));
-      row.push(minToHours(stats.duration));
-      if (stats.distance > 0) row.push(roundFloat(stats.pace));
+      row.push(roundFloat(stats.distance, 1));
+      row.push(minToHours(stats.duration, 1));
+      if (stats.distance > 0) row.push(roundFloat(stats.pace, 1));
       rows.push(row);
     }
   });
@@ -209,51 +227,16 @@ const statsAllToRows = () => {
   else return "no data";
 };
 
-const stats1UserRows = username => {
-  const stats = notes.getLastXStats(STATSDAYS, username);
+const stats1UserRows = (username, runsAmount) => {
+  const stats = notes.getLastXStats(runsAmount, username);
   if (stats.error) return { error: stats.error };
   else {
     let rows = [["stat", "value"]];
     rows.push(["km", `${stats.distance}`]);
-    rows.push([`h`, `${minToHours(stats.duration)}`]);
-    if (stats.distance > 0) rows.push(["min/km", roundFloat(stats.pace)]);
+    rows.push([`h`, `${minToHours(stats.duration, 2)}`]);
+    if (stats.distance > 0) rows.push(["⌀", roundFloat(stats.pace, 2)]);
     rows.push([`runs`, `${notes.getNrOfRuns(username)}`]);
     return rows;
-  }
-};
-
-const statsAll = () => {
-  let users = notes.getAllUsers();
-  let outputStr = "";
-  users.forEach(username => {
-    let stats = notes.getAllStats(username);
-    if (!stats.err) {
-      outputStr += username + ": ";
-      outputStr += stats.distance + "km, ";
-      outputStr += roundFloat(stats.duration / 60) + "h, ";
-      outputStr += roundFloat(stats.pace) + "km/min, ";
-      outputStr += stats.runs + " runs";
-    }
-  });
-  if (outputStr.length > 0) return outputStr;
-  else return { error: "no data" };
-};
-
-const statsToStr = username => {
-  const stats = notes.getLastXStats(STATSDAYS, username);
-  if (stats) {
-    let runsCnt = notes.getNrOfRuns(username);
-    replyStr = `Stats for \'${username}\':\n`;
-    replyStr += `Distance: ${stats.distance}km\n`;
-    replyStr += `Duration: ${stats.duration}min\n`;
-    let pace = notes.getPace(stats.distance, stats.duration);
-    if (stats.distance != 0) {
-      replyStr += `Pace: ${Number(pace.toFixed(DECIMALSAFTERDOT))}km/min\n`;
-    }
-    replyStr += `Runs: ${runsCnt}`;
-    return replyStr;
-  } else {
-    return "No runs saved";
   }
 };
 
@@ -314,6 +297,6 @@ const prepairStrForMarkdown = input => {
 };
 
 const addMarkdownEvenWidth = input => "```\n".concat(input).concat("\n```");
-const roundFloat = x => Number(x.toFixed(DECIMALSAFTERDOT));
+const roundFloat = (x, aD) => Number(x.toFixed(aD));
 
 bot.launch();
