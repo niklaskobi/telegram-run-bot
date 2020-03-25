@@ -12,6 +12,8 @@ const URL = process.env.URL || "https://telegram-bot-run.herokuapp.com/";
 const PORT = process.env.PORT || 3000;
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
+var preventSleep = true;
+
 // webhooks
 bot.telegram.setWebhook(`${URL}/bot${API_TOKEN}`);
 bot.startWebhook(`/bot${API_TOKEN}`, null, PORT);
@@ -23,7 +25,7 @@ const MAX_CHARS_NAME = 5;
 let tableOptions = {
   delimiterStart: false,
   delimiterEnd: false,
-  padding: true
+  padding: false
 };
 
 // bot commands ========================================================================
@@ -36,6 +38,13 @@ bot.command("modern", ({ reply }) => reply("Yo"));
 // test ===============================================================================
 bot.hears("test", ctx => {
   bot.telegram.sendMessage(ctx.chat.id, "*work! work!*", markup);
+});
+
+// test ===============================================================================
+bot.hears("log", ctx => {
+  let logs = notes.loadNotes();
+  console.log(logs);
+  bot.telegram.sendMessage(ctx.chat.id, logs, markup);
 });
 
 // stats: me =========================================================================
@@ -58,6 +67,13 @@ bot.command("me", ctx => {
   else {
     sendEvenWidthMsg(ctx, titleText, tableAsStr);
   }
+});
+
+// prevent from sleep =========================================================================
+bot.command("work", ctx => {
+  let username = getUserName(ctx);
+  console.log(chalk.blue(JSON.stringify(ctx)));
+  sendSpecMsg(ctx, "ok, i work then");
 });
 
 // history =========================================================================
@@ -149,7 +165,7 @@ const sendEvenWidthMsg = (ctx, title, msg) =>
 
 const history1UserRow = (username, runsAmount) => {
   let runs = notes.getLastNRuns(runsAmount, username);
-  let rowHeader = ["date", "km", "min", "m/km"];
+  let rowHeader = ["date", "km", "min", "min/km"];
   let rows = [rowHeader];
 
   if (!runs) return { error: "no data" };
@@ -170,7 +186,7 @@ const dateToStr = date => date.getDate() + "." + (date.getMonth() + 1);
 const minToHours = min => Number((min / 60).toFixed(1));
 
 const statsAllToRows = () => {
-  let rowHeader = ["name", "km", "h", "m/km"];
+  let rowHeader = ["name", "km", "h", "min/km"];
   let rows = [rowHeader];
   let users = notes.getAllUsers();
   let outputStr = "";
@@ -198,7 +214,7 @@ const stats1UserRows = username => {
     let rows = [["stat", "value"]];
     rows.push(["km", `${stats.distance}`]);
     rows.push([`h`, `${minToHours(stats.duration)}`]);
-    if (stats.distance > 0) rows.push(["m/km", roundFloat(stats.pace)]);
+    if (stats.distance > 0) rows.push(["min/km", roundFloat(stats.pace)]);
     rows.push([`runs`, `${notes.getNrOfRuns(username)}`]);
     return rows;
   }
