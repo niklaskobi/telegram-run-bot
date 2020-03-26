@@ -45,11 +45,7 @@ bot.command("json", ctx => {
   let logs = notes.loadNotes();
   if (logs.length > 0) {
     console.log(JSON.stringify(logs));
-    bot.telegram.sendMessage(
-      ctx.chat.id,
-      JSON.stringify(logs, null, 2),
-      markup
-    );
+    bot.telegram.sendMessage(ctx.chat.id, JSON.stringify(logs, null, 2));
   } else {
     console.log("no file");
     bot.telegram.sendMessage(ctx.chat.id, "no file", markup);
@@ -232,7 +228,7 @@ const stats1UserRows = (username, runsAmount) => {
   if (stats.error) return { error: stats.error };
   else {
     let rows = [["stat", "value"]];
-    rows.push(["km", `${stats.distance}`]);
+    rows.push(["km", `${roundFloat(stats.distance, 2)}`]);
     rows.push([`h`, `${minToHours(stats.duration, 2)}`]);
     if (stats.distance > 0) rows.push(["⌀", roundFloat(stats.pace, 2)]);
     rows.push([`runs`, `${notes.getNrOfRuns(username)}`]);
