@@ -1,6 +1,6 @@
 [
   {
-    "nickName": "Eug Che",
+    "nickName": "Eug",
     "stats": {
       "allDistance": 64.86,
       "allDuration": 367.5,
@@ -104,6 +104,7 @@
     ]
   },
   {
+    "id": 263192743,
     "nickName": "kola_kobi",
     "stats": {
       "allDistance": 77.04,
