@@ -2,11 +2,17 @@
   {
     "nickName": "Eug",
     "stats": {
-      "allDistance": 64.86,
-      "allDuration": 367.5,
-      "allPace": 5.66
+      "allDistance": 79.86,
+      "allDuration": 457,
+      "allPace": 5.71
     },
     "runs": [
+      {
+        "date": "2020-03-29T10:17:40.000Z",
+        "distance": 15,
+        "duration": 90,
+        "pace": 6
+      },
       {
         "date": "2020-02-22T00:00:00.000Z",
         "distance": 10,
