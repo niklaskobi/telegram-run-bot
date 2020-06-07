@@ -8,15 +8,15 @@ var table = require("markdown-table");
 
 // server variables
 const API_TOKEN = process.env.API_TOKEN || "";
-const URL = process.env.URL || "https://telegram-bot-run.herokuapp.com/";
-const PORT = process.env.PORT || 3000;
+//const URL = process.env.URL || "https://telegram-bot-run.herokuapp.com/";
+const PORT = process.env.PORT || 30000;
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
 var preventSleep = true;
 
 // webhooks
-bot.telegram.setWebhook(`${URL}/bot${API_TOKEN}`);
-bot.startWebhook(`/bot${API_TOKEN}`, null, PORT);
+//bot.telegram.setWebhook(`${URL}/bot${API_TOKEN}`);
+//bot.startWebhook(`/bot${API_TOKEN}`, null, PORT);
 
 // app variables
 const STATSDAYS = 10;

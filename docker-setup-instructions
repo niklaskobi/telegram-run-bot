@@ -1,0 +1,5 @@
+docker stop
+docker rm
+chown 2000:2000 data/
+docker build . -t kobi/runbot
+docker run --name runbot -p 8081:30000 -v /home/runbot/telegram-run-bot/data:/home/runbot/data -d kobi/runbot

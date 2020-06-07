@@ -196,12 +196,12 @@ const removeNote = nickName => {
 
 const saveNotes = notes => {
   const dataJSON = JSON.stringify(notes);
-  fs.writeFileSync("notes.json", dataJSON);
+  fs.writeFileSync("data/notes.json", dataJSON);
 };
 
 const loadNotes = () => {
   try {
-    const dataBuffer = fs.readFileSync("notes.json");
+    const dataBuffer = fs.readFileSync("data/notes.json");
     const dataJSON = dataBuffer.toString();
     return JSON.parse(dataJSON);
   } catch (e) {
